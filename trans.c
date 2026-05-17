@@ -16,6 +16,7 @@ void textFile(FILE *readPtr);
 void updateRecord(FILE *fPtr);
 void newRecord(FILE *fPtr);
 void deleteRecord(FILE *fPtr);
+void viewRecords(FILE *fPtr);
 
 int main()
 {
@@ -32,7 +33,7 @@ int main()
     }
 
     // Menu
-    while ((choice = enterChoice()) != 5)
+    while ((choice = enterChoice()) != 6)
     {
         switch (choice)
         {
@@ -50,6 +51,10 @@ int main()
 
         case 4:
             deleteRecord(cfPtr);
+            break;
+
+        case 5:
+            viewRecords(cfPtr);
             break;
 
         default:
@@ -71,12 +76,39 @@ unsigned int enterChoice(void)
     printf("2. Update account\n");
     printf("3. Add new account\n");
     printf("4. Delete account\n");
-    printf("5. Exit\n");
+    printf("5. View all accounts\n");
+    printf("6. Exit\n");
     printf("Enter choice: ");
 
     scanf("%u", &choice);
 
     return choice;
+}
+
+// View all accounts
+void viewRecords(FILE *fPtr)
+{
+    struct clientData client;
+
+    rewind(fPtr);
+
+    printf("\n%-6s %-15s %-10s %-10s\n",
+           "Acct", "LastName", "FirstName", "Balance");
+
+    while (fread(&client,
+                 sizeof(struct clientData),
+                 1,
+                 fPtr))
+    {
+        if (client.acctNum != 0)
+        {
+            printf("%-6u %-15s %-10s %.2lf\n",
+                   client.acctNum,
+                   client.lastName,
+                   client.firstName,
+                   client.balance);
+        }
+    }
 }
 
 // Create text file
@@ -95,10 +127,17 @@ void textFile(FILE *readPtr)
 
     rewind(readPtr);
 
-    fprintf(writePtr, "%-6s %-15s %-10s %10s\n",
-            "Acct", "LastName", "FirstName", "Balance");
+    fprintf(writePtr,
+            "%-6s %-15s %-10s %10s\n",
+            "Acct",
+            "LastName",
+            "FirstName",
+            "Balance");
 
-    while (fread(&client, sizeof(struct clientData), 1, readPtr))
+    while (fread(&client,
+                 sizeof(struct clientData),
+                 1,
+                 readPtr))
     {
         if (client.acctNum != 0)
         {
@@ -115,7 +154,7 @@ void textFile(FILE *readPtr)
     printf("Accounts stored in accounts.txt\n");
 }
 
-// Update record
+// Update account
 void updateRecord(FILE *fPtr)
 {
     unsigned int account;
@@ -126,10 +165,14 @@ void updateRecord(FILE *fPtr)
     scanf("%u", &account);
 
     fseek(fPtr,
-          (account - 1) * sizeof(struct clientData),
+          (account - 1) *
+              sizeof(struct clientData),
           SEEK_SET);
 
-    fread(&client, sizeof(struct clientData), 1, fPtr);
+    fread(&client,
+          sizeof(struct clientData),
+          1,
+          fPtr);
 
     if (client.acctNum == 0)
     {
@@ -159,7 +202,7 @@ void updateRecord(FILE *fPtr)
     }
 }
 
-// Add new record
+// Add new account
 void newRecord(FILE *fPtr)
 {
     struct clientData client = {0, "", "", 0.0};
@@ -169,7 +212,8 @@ void newRecord(FILE *fPtr)
     scanf("%u", &accountNum);
 
     fseek(fPtr,
-          (accountNum - 1) * sizeof(struct clientData),
+          (accountNum - 1) *
+              sizeof(struct clientData),
           SEEK_SET);
 
     fread(&client,
@@ -206,12 +250,11 @@ void newRecord(FILE *fPtr)
     }
 }
 
-// Delete record
+// Delete account
 void deleteRecord(FILE *fPtr)
 {
     struct clientData client;
     struct clientData blankClient = {0, "", "", 0.0};
-
     unsigned int accountNum;
 
     printf("Enter account number to delete: ");
